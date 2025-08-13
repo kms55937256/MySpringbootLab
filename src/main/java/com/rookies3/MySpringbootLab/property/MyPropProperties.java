@@ -1,4 +1,4 @@
-package com.rookies3.MySpringbootlab.property;
+package com.rookies3.MySpringbootLab.property;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +9,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("myprop")
 @Getter @Setter
 public class MyPropProperties {
-    private String userName;
+    private String username;
     private int port;
 }

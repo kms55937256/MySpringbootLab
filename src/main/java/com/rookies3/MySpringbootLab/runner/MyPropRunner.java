@@ -1,5 +1,5 @@
-package com.rookies3.MySpringbootlab.runner;
-import com.rookies3.MySpringbootlab.property.MyPropProperties;
+package com.rookies3.MySpringbootLab.runner;
+import com.rookies3.MySpringbootLab.property.MyPropProperties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,28 +11,27 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-public class MyPropRunner implements ApplicationRunner{
-    @Value("${myprop.userName}")
-    private String userName;
+public class MyPropRunner implements ApplicationRunner {
+    private final String username;
+    private final int port;
+    private final MyPropProperties properties;
+    private final Logger logger = LoggerFactory.getLogger(MyPropRunner.class);
 
-
-    @Value("${myprop.port}")
-    private int port;
-
-    @Autowired
-    private MyPropProperties properties;
-
-    //Logger 객체 생성
-    private Logger logger = LoggerFactory.getLogger(MyPropRunner.class);
-
-
-    @Override
-    public void run(ApplicationArguments args) throws Exception {
-        logger.info("Properties myprop.userName = " + userName);
-        logger.info("Properties myprop.port = " + port);
-
-        logger.debug("MyPropProperties.getUserName() = " + properties.getUserName());
-        logger.debug("MyPropProperties.getPort() = " + properties.getPort());
+    public MyPropRunner(
+            @Value("${myprop.username}") String username,
+            @Value("${myprop.port}") int port,
+            MyPropProperties properties
+    ) {
+        this.username = username;
+        this.port = port;
+        this.properties = properties;
     }
 
+    @Override
+    public void run(ApplicationArguments args) {
+        logger.info("Properties myprop.username = {}", username);
+        logger.info("Properties myprop.port = {}", port);
+        logger.debug("MyPropProperties.getUsername() = {}", properties.getUsername());
+        logger.debug("MyPropProperties.getPort() = {}", properties.getPort());
+    }
 }

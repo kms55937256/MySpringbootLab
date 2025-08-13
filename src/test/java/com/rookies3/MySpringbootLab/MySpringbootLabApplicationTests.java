@@ -1,4 +1,4 @@
-package com.rookies3.MySpringbootlab;
+package com.rookies3.MySpringbootLab;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
