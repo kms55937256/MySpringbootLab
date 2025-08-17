@@ -1,4 +1,4 @@
-package com.rookies3.MySpringbootLab;
+package com.rookies4.MySpringbootLab;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
