@@ -3,9 +3,11 @@ package com.rookies4.MySpringbootLab.service;
 import com.rookies4.MySpringbootLab.controller.dto.BookDTO;
 import com.rookies4.MySpringbootLab.entity.Book;
 import com.rookies4.MySpringbootLab.entity.BookDetail;
+import com.rookies4.MySpringbootLab.entity.Publisher;
 import com.rookies4.MySpringbootLab.exception.BusinessException;
 import com.rookies4.MySpringbootLab.exception.ErrorCode;
 import com.rookies4.MySpringbootLab.repository.BookRepository;
+import com.rookies4.MySpringbootLab.repository.PublisherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import java.util.List;
 public class BookService {
 
     private final BookRepository bookRepository;
+    private final PublisherRepository publisherRepository; // 🔽 추가
 
     /* ===================== CREATE ===================== */
     public BookDTO.BookResponse create(BookDTO.BookCreateRequest req) {
@@ -29,7 +32,15 @@ public class BookService {
             );
         }
 
+        // 출판사 조회
+        Publisher publisher = publisherRepository.findById(req.getPublisherId())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND.formatMessage("Publisher", "id", req.getPublisherId()),
+                        ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus()
+                ));
+
         Book book = req.toEntity();
+        book.setPublisher(publisher); // 🔽 연관관계 연결
 
         // 상세 동시 처리
         if (req.getDetailRequest() != null) {
@@ -44,7 +55,6 @@ public class BookService {
     /* ===================== READ ===================== */
     @Transactional(readOnly = true)
     public List<BookDTO.BookResponse> getAll() {
-        // Lazy 문제 해결: 항상 BookDetail까지 함께 로딩
         return bookRepository.findAllWithDetail()
                 .stream()
                 .map(BookDTO.BookResponse::from)
@@ -95,11 +105,19 @@ public class BookService {
                         ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus()
                 ));
 
+        // 출판사 재조회 & 설정
+        Publisher publisher = publisherRepository.findById(req.getPublisherId())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND.formatMessage("Publisher", "id", req.getPublisherId()),
+                        ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus()
+                ));
+
         // Book 필드 전체 교체
         book.setTitle(req.getTitle());
         book.setAuthor(req.getAuthor());
         book.setPrice(req.getPrice());
         book.setPublishDate(req.getPublishDate());
+        book.setPublisher(publisher); // 🔽 연관관계 갱신
 
         // BookDetail 교체
         if (req.getDetailRequest() != null) {
@@ -144,6 +162,16 @@ public class BookService {
                 }
                 book.setIsbn(newIsbn);
             }
+        }
+
+        // PATCH에서도 출판사 변경 가능
+        if (req.getPublisherId() != null) {
+            Publisher publisher = publisherRepository.findById(req.getPublisherId())
+                    .orElseThrow(() -> new BusinessException(
+                            ErrorCode.RESOURCE_NOT_FOUND.formatMessage("Publisher", "id", req.getPublisherId()),
+                            ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus()
+                    ));
+            book.setPublisher(publisher);
         }
 
         Book saved = bookRepository.save(book);

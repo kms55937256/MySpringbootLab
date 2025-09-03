@@ -7,8 +7,11 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "books")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Book {
 
     @Id
@@ -30,7 +33,7 @@ public class Book {
     private LocalDate publishDate;
 
     /*
-     * 1:1 양방향 매핑(비주인)
+     * 1:1 양방향 매핑 (비주인)
      * - 주인(Owner): BookDetail (FK: book_id)
      * - Book에서 BookDetail을 참조할 수 있도록 mappedBy="book"
      * - 연관 엔티티 생명주기 관리(cascade=ALL, orphanRemoval=true)
@@ -42,14 +45,32 @@ public class Book {
             orphanRemoval = true)
     private BookDetail detail;
 
+    /*
+     * N:1 매핑 (Book -> Publisher)
+     * - 여러 책이 하나의 출판사에 속한다.
+     * - 외래 키: books.publisher_id
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publisher_id")
+    private Publisher publisher;
+
     /**
-     * 편의 메서드: 양방향 연관관계 세팅
-     * (Lombok @Setter가 생성하는 setter 대신 이 메서드로 설정하는 것을 권장)
+     * BookDetail 편의 메서드 (양방향 연관관계 세팅)
      */
     public void setDetail(BookDetail detail) {
         this.detail = detail;
         if (detail != null && detail.getBook() != this) {
             detail.setBook(this);
+        }
+    }
+
+    /**
+     * Publisher 편의 메서드 (양방향 연관관계 세팅)
+     */
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
+        if (publisher != null && !publisher.getBooks().contains(this)) {
+            publisher.getBooks().add(this);
         }
     }
 }

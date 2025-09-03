@@ -31,6 +31,10 @@ public class BookDTO {
 
         private LocalDate publishDate;
 
+        /** 🔽 새로 추가 */
+        @NotNull(message = "출판사 ID는 필수입니다.")
+        private Long publisherId;
+
         @Valid
         private BookDetailRequest detailRequest; // 선택
 
@@ -42,10 +46,11 @@ public class BookDTO {
                     .price(price)
                     .publishDate(publishDate)
                     .build();
+            // publisher는 서비스단에서 publisherId로 조회 후 setPublisher() 해줌
         }
     }
 
-    /* ========== Update(PUT) 요청 DTO(전체 교체) ========== */
+    /* ========== Update(PUT) 요청 DTO ========== */
     @Getter @Setter
     @NoArgsConstructor @AllArgsConstructor @Builder
     public static class BookUpdateRequest {
@@ -61,6 +66,10 @@ public class BookDTO {
 
         private LocalDate publishDate;
 
+        /** 🔽 새로 추가 */
+        @NotNull(message = "출판사 ID는 필수입니다.")
+        private Long publisherId;
+
         @Valid
         private BookDetailRequest detailRequest; // 선택
     }
@@ -74,6 +83,7 @@ public class BookDTO {
         private String isbn;
         private Integer price;
         private LocalDate publishDate;
+        private Long publisherId; // 🔽 PATCH라 optional로 둠
     }
 
     /* ========== BookDetail 부분수정(PATCH) 요청 DTO(모두 선택) ========== */
@@ -122,6 +132,7 @@ public class BookDTO {
         private Integer price;
         private LocalDate publishDate;
         private BookDetailResponse detail; // 포함 응답
+        private Long publisherId;          // 🔽 응답에도 publisherId 추가 가능
 
         public static BookResponse from(Book book) {
             BookDetailResponse detailDto = null;
@@ -145,6 +156,7 @@ public class BookDTO {
                     .price(book.getPrice())
                     .publishDate(book.getPublishDate())
                     .detail(detailDto)
+                    .publisherId(book.getPublisher() != null ? book.getPublisher().getId() : null)
                     .build();
         }
     }
