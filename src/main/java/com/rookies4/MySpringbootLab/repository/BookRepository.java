@@ -12,20 +12,27 @@ import java.util.Optional;
 @Repository
 public interface BookRepository extends JpaRepository<Book, Long> {
 
-    // 기본 조회
+    // ISBN으로 단건 조회
     Optional<Book> findByIsbn(String isbn);
+
+    // 저자명으로 목록 조회
     List<Book> findByAuthor(String author);
 
-    // ISBN 중복 체크
+    // 제목 일부 포함 검색 (대소문자 무시)
+    List<Book> findByTitleContainingIgnoreCase(String title);
+
+    // ISBN 중복 여부 확인
     boolean existsByIsbn(String isbn);
 
-    // Book + BookDetail 을 한 번에 로드 (페치 조인)
+    // Book + BookDetail (1:1 관계) 함께 조회 - ID 기준
     @Query("SELECT b FROM Book b LEFT JOIN FETCH b.detail WHERE b.id = :id")
     Optional<Book> findByIdWithDetail(@Param("id") Long id);
 
+    // Book + BookDetail (1:1 관계) 함께 조회 - ISBN 기준
     @Query("SELECT b FROM Book b LEFT JOIN FETCH b.detail WHERE b.isbn = :isbn")
     Optional<Book> findByIsbnWithDetail(@Param("isbn") String isbn);
 
-    // (옵션) 제목 검색 지원 – 컨트롤러의 title 검색용
-    List<Book> findByTitleContainingIgnoreCase(String title);
+    // 모든 Book + BookDetail 조회 (목록용)
+    @Query("SELECT b FROM Book b LEFT JOIN FETCH b.detail")
+    List<Book> findAllWithDetail();
 }

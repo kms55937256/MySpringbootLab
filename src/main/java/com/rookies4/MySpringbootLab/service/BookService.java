@@ -7,7 +7,6 @@ import com.rookies4.MySpringbootLab.exception.BusinessException;
 import com.rookies4.MySpringbootLab.exception.ErrorCode;
 import com.rookies4.MySpringbootLab.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +31,10 @@ public class BookService {
 
         Book book = req.toEntity();
 
-        // 상세 동시 처리(있을 때만)
+        // 상세 동시 처리
         if (req.getDetailRequest() != null) {
             BookDetail detail = req.getDetailRequest().toEntity();
-            book.setDetail(detail); // 편의 메서드로 양방향 연결(detail.setBook(this) 포함)
+            book.setDetail(detail); // 양방향 연결
         }
 
         Book saved = bookRepository.save(book);
@@ -45,7 +44,8 @@ public class BookService {
     /* ===================== READ ===================== */
     @Transactional(readOnly = true)
     public List<BookDTO.BookResponse> getAll() {
-        return bookRepository.findAll()
+        // Lazy 문제 해결: 항상 BookDetail까지 함께 로딩
+        return bookRepository.findAllWithDetail()
                 .stream()
                 .map(BookDTO.BookResponse::from)
                 .toList();
@@ -87,7 +87,7 @@ public class BookService {
                 .toList();
     }
 
-    /* ===================== UPDATE (PUT: 전체 교체) ===================== */
+    /* ===================== UPDATE (PUT) ===================== */
     public BookDTO.BookResponse update(Long id, BookDTO.BookUpdateRequest req) {
         Book book = bookRepository.findByIdWithDetail(id)
                 .orElseThrow(() -> new BusinessException(
@@ -95,18 +95,18 @@ public class BookService {
                         ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus()
                 ));
 
-        // Book 필드 전체 교체(ISBN은 PUT 스펙상 유지; ISBN 변경은 PATCH에서 처리)
+        // Book 필드 전체 교체
         book.setTitle(req.getTitle());
         book.setAuthor(req.getAuthor());
         book.setPrice(req.getPrice());
         book.setPublishDate(req.getPublishDate());
 
-        // 상세가 오면 "전체 교체" 정책으로 반영
+        // BookDetail 교체
         if (req.getDetailRequest() != null) {
             BookDetail detail = book.getDetail();
             if (detail == null) {
                 detail = new BookDetail();
-                book.setDetail(detail); // 양방향 연결 포함
+                book.setDetail(detail);
             }
             detail.setDescription(req.getDetailRequest().getDescription());
             detail.setLanguage(req.getDetailRequest().getLanguage());
@@ -120,7 +120,7 @@ public class BookService {
         return BookDTO.BookResponse.from(updated);
     }
 
-    /* ===================== PATCH (부분수정) ===================== */
+    /* ===================== PATCH ===================== */
     public BookDTO.BookResponse patchBook(Long id, BookDTO.PatchRequest req) {
         Book book = bookRepository.findByIdWithDetail(id)
                 .orElseThrow(() -> new BusinessException(
@@ -128,7 +128,6 @@ public class BookService {
                         ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus()
                 ));
 
-        // null 아닌 필드만 반영
         if (req.getTitle() != null)      book.setTitle(req.getTitle());
         if (req.getAuthor() != null)     book.setAuthor(req.getAuthor());
         if (req.getPrice() != null)      book.setPrice(req.getPrice());
@@ -161,10 +160,9 @@ public class BookService {
         BookDetail detail = book.getDetail();
         if (detail == null) {
             detail = new BookDetail();
-            book.setDetail(detail); // 양방향 연결
+            book.setDetail(detail);
         }
 
-        // null 아닌 상세 필드만 반영
         if (req.getDescription() != null)   detail.setDescription(req.getDescription());
         if (req.getLanguage() != null)      detail.setLanguage(req.getLanguage());
         if (req.getPageCount() != null)     detail.setPageCount(req.getPageCount());
@@ -172,7 +170,7 @@ public class BookService {
         if (req.getCoverImageUrl() != null) detail.setCoverImageUrl(req.getCoverImageUrl());
         if (req.getEdition() != null)       detail.setEdition(req.getEdition());
 
-        Book saved = bookRepository.save(book); // cascade로 detail까지 반영
+        Book saved = bookRepository.save(book);
         return BookDTO.BookResponse.from(saved);
     }
 
